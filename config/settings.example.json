@@ -1,0 +1,27 @@
+{
+  "email": {
+    "smtp_server": "smtp.163.com",
+    "smtp_port": 465,
+    "username": "YOUR_EMAIL@163.com",
+    "password": "YOUR_AUTH_CODE",
+    "to_email": "YOUR_EMAIL@163.com"
+  },
+  "ai": {
+    "api_key": "sk-YOUR_VECTOR_ENGINE_API_KEY",
+    "api_url": "https://api.vectorengine.ai/v1/chat/completions",
+    "model": "gemini-3-flash-preview"
+  },
+  "check_interval_hours": 6,
+  "summary_style": {
+    "max_length": "不限制",
+    "include": ["核心观点", "论证逻辑", "关键结论", "标签分类"],
+    "format": "structured_with_tags"
+  },
+  "default_tags": ["投资", "研究", "金融", "经济", "宏观", "行业分析", "政策解读"],
+  "tag_rules": {
+    "地缘政治": ["美伊冲突", "中美关系", "俄乌战争", "中东局势"],
+    "市场板块": ["科技股", "新能源", "医药", "消费", "地产", "银行"],
+    "经济周期": ["通胀", "通缩", "降息", "加息", "recession"],
+    "投资策略": ["价值投资", "成长投资", "量化投资", "资产配置"]
+  }
+}

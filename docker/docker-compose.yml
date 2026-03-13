@@ -1,0 +1,30 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: wewe-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: wewe-rss
+      MYSQL_USER: wewe
+      MYSQL_PASSWORD: wewe123
+    volumes:
+      - ~/wewe-mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    restart: unless-stopped
+
+  wewe-rss:
+    image: cooderl/wewe-rss:latest
+    container_name: wewe-rss
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=mysql://wewe:wewe123@mysql:3306/wewe-rss
+      - DATABASE_TYPE=mysql
+      - AUTH_CODE=admin123
+      - PLATFORM_URL=https://weread.965111.xyz
+    depends_on:
+      - mysql
+    restart: unless-stopped

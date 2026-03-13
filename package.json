@@ -1,0 +1,23 @@
+{
+  "name": "wechat-monitor",
+  "version": "1.0.0",
+  "description": "微信公众号监控与 AI 总结系统",
+  "main": "app/server.js",
+  "scripts": {
+    "start": "node app/server.js",
+    "dev": "node app/server.js",
+    "setup": "node scripts/setup.js",
+    "test-email": "node scripts/test-email.js",
+    "test-ai": "node scripts/test-ai.js"
+  },
+  "keywords": ["wechat", "monitor", "ai", "rss", "investment"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nodemailer": "^6.9.0",
+    "xml2js": "^0.6.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

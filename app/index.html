@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公众号监控中心</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            color: white;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 6px; }
+        .header p { opacity: 0.6; font-size: 13px; }
+
+        /* 提示条 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            transition: opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        .toast.info { background: #1e3a5f; color: #64b5f6; border: 1px solid #1565c0; }
+        .toast.error { background: #3e1a1a; color: #ef9a9a; border: 1px solid #c62828; }
+        .toast.success { background: #1a3e1a; color: #a5d6a7; border: 1px solid #2e7d32; }
+
+        /* 卡片通用 */
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        /* 控制面板 */
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .status-indicator { display: flex; align-items: center; gap: 10px; }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #666; transition: all 0.3s;
+        }
+        .status-dot.idle { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
+        .status-dot.running { background: #2196f3; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .status-text { font-size: 16px; font-weight: 600; }
+
+        /* 上次执行信息 */
+        .last-run {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin: 16px 0;
+            padding: 12px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+        .last-run .success { color: #4caf50; }
+        .last-run .fail { color: #f44336; }
+        .last-run .mode { color: #667eea; font-weight: 600; }
+
+        /* 按钮组 */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .btn {
+            padding: 14px 24px; border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        
+        .btn-primary { 
+            background: linear-gradient(135deg, #667eea, #764ba2); 
+            color: white;
+        }
+        .btn-primary:hover { box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        
+        .btn-secondary { 
+            background: linear-gradient(135deg, #f093fb, #f5576c); 
+            color: white;
+        }
+        .btn-secondary:hover { box-shadow: 0 4px 15px rgba(240,147,251,0.4); }
+        
+        .btn-refresh {
+            background: rgba(255,255,255,0.08);
+            color: #888;
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+        .btn-refresh:hover { background: rgba(255,255,255,0.12); color: #ccc; }
+
+        .btn-row-single {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* 模式说明 */
+        .mode-desc {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+        .mode-desc strong { color: #888; }
+
+        /* 公众号列表 */
+        .section-title {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px;
+        }
+        .section-title h2 { font-size: 18px; font-weight: 700; }
+        .section-title .count { font-size: 13px; color: #888; font-weight: normal; }
+
+        .account-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .account-item {
+            display: flex; align-items: center; padding: 12px 16px;
+            background: rgba(255,255,255,0.03); border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+        .account-item:hover {
+            background: rgba(255,255,255,0.06);
+            border-color: rgba(102,126,234,0.3);
+        }
+
+        .account-avatar {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 16px; font-weight: 700;
+            margin-right: 12px; flex-shrink: 0;
+        }
+
+        .account-info { flex: 1; min-width: 0; }
+        .account-name { font-size: 14px; font-weight: 600; color: #e0e0e0; }
+        .account-detail {
+            font-size: 12px; color: #666; margin-top: 2px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .account-detail a { color: #667eea; text-decoration: none; }
+        .account-detail a:hover { text-decoration: underline; }
+
+        .account-meta {
+            text-align: right; flex-shrink: 0; margin-left: 12px;
+        }
+        .article-count {
+            font-size: 11px; color: #888;
+            background: rgba(255,255,255,0.06);
+            padding: 2px 8px; border-radius: 10px;
+        }
+        .article-time { font-size: 11px; color: #555; margin-top: 4px; }
+        .recent-badge {
+            display: inline-block;
+            font-size: 10px;
+            background: rgba(76,175,80,0.2);
+            color: #4caf50;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        /* 空状态 */
+        .empty {
+            text-align: center; padding: 40px; color: #555;
+        }
+        .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+        /* 加载动画 */
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* RSS来源标注 */
+        .rss-badge {
+            display: inline-block; font-size: 10px;
+            background: rgba(102,126,234,0.15); color: #667eea;
+            padding: 1px 6px; border-radius: 4px; margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>公众号监控中心</h1>
+            <p>AI 总结 / 邮件推送 / 手动触发</p>
+        </div>
+
+        <div id="toast" class="toast info"></div>
+
+        <!-- 控制面板 -->
+        <div class="card">
+            <div class="control-row">
+                <div class="status-indicator">
+                    <div id="statusDot" class="status-dot"></div>
+                    <span id="statusText" class="status-text">连接中...</span>
+                </div>
+            </div>
+
+            <div id="lastRun" class="last-run"></div>
+
+            <!-- 两个主要按钮 -->
+            <div class="btn-grid">
+                <button id="runRecentBtn" class="btn btn-primary" onclick="runRecent()">
+                    检查更新
+                </button>
+                <button id="runAllBtn" class="btn btn-secondary" onclick="runAll()">
+                    全量更新
+                </button>
+            </div>
+
+            <!-- 刷新按钮 -->
+            <div class="btn-row-single">
+                <button class="btn btn-refresh" onclick="refresh()">
+                    刷新公众号列表
+                </button>
+            </div>
+
+            <div class="mode-desc">
+                <strong>检查更新</strong>：只抓取<strong>6小时内</strong>更新的文章<br>
+                <strong>全量更新</strong>：抓取<strong>所有公众号</strong>的最新文章（不论更新时间）
+            </div>
+        </div>
+
+        <!-- 公众号列表 -->
+        <div class="card">
+            <div class="section-title">
+                <h2>订阅公众号 <span class="rss-badge">RSS</span></h2>
+                <span id="accountCount" class="count">加载中...</span>
+            </div>
+            <div id="accountList" class="account-list">
+                <div class="empty">
+                    <div class="empty-icon">⏳</div>
+                    <div>正在从 WeWe-RSS 加载公众号列表...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
